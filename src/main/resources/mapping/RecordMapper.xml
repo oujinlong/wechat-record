@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ouda.mapper.RecordMapper" >
+  <resultMap id="BaseResultMap" type="com.ouda.entity.Record" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="createTime" property="createtime" jdbcType="TIMESTAMP" />
+    <result column="msgType" property="msgtype" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.ouda.entity.RecordWithBLOBs" extends="BaseResultMap" >
+    <result column="fromUser" property="fromuser" jdbcType="LONGVARCHAR" />
+    <result column="toUser" property="touser" jdbcType="LONGVARCHAR" />
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <resultMap id="UserMap" type="com.ouda.entity.User">
+    <result column="id" property="id" jdbcType="INTEGER"></result>
+    <result column="name" property="name" jdbcType="LONGVARCHAR"></result>
+    <result column="nickName" property="nickName" jdbcType="LONGVARCHAR"></result>
+    <result column="avatar" property="avatar" jdbcType="LONGVARCHAR"></result>
+    <result column="sign" property="sign" jdbcType="LONGVARCHAR"></result>
+    <result column="remark" property="remark" jdbcType="LONGVARCHAR"></result>
+    <result column="isGroupChat" property="isGroupChat" jdbcType="INTEGER"></result>
+  </resultMap>
+  <resultMap id="recordResultMap" type="com.ouda.dto.RecordDTO">
+    <association property="record" javaType="com.ouda.entity.RecordWithBLOBs" resultMap="ResultMapWithBLOBs"></association>
+    <association property="userA" resultMap="UserMap"></association>
+    <association property="userB" resultMap="UserMap"></association>
+  </resultMap>
+  <resultMap id="countMap" type="INTEGER"></resultMap>
+  <sql id="Base_Column_List" >
+    id, createTime, msgType
+  </sql>
+  <sql id="Blob_Column_List" >
+    fromUser, toUser, content
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from record
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByName" resultMap="recordResultMap" >
+    select
+    *
+    from record
+    where ((record.fromUser = #{userA,jdbcType=CLOB} AND record.toUser = #{userB, jdbcType=CLOB}) OR (record.fromUser = #{userB,jdbcType=CLOB} AND record.toUser = #{userA, jdbcType=CLOB}) ) AND record.msgType = 1
+    order by record.createTime DESC limit #{limit} OFFSET #{offset}
+  </select>
+  <select id="selectUsers" resultMap="UserMap">
+    select *
+    from record_user
+     order by id DESC limit #{limit} OFFSET #{offset}
+  </select>
+  <select id="selectUserCount" resultMap="countMap">
+    select count(*)
+    from record_user
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from record
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.ouda.entity.RecordWithBLOBs" >
+    insert into record (id, createTime, msgType, 
+      fromUser, toUser, content
+      )
+    values (#{id,jdbcType=INTEGER}, #{createtime,jdbcType=TIMESTAMP}, #{msgtype,jdbcType=INTEGER}, 
+      #{fromuser,jdbcType=LONGVARCHAR}, #{touser,jdbcType=LONGVARCHAR}, #{content,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.ouda.entity.RecordWithBLOBs" >
+    insert into record
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="createtime != null" >
+        createTime,
+      </if>
+      <if test="msgtype != null" >
+        msgType,
+      </if>
+      <if test="fromuser != null" >
+        fromUser,
+      </if>
+      <if test="touser != null" >
+        toUser,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="createtime != null" >
+        #{createtime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="msgtype != null" >
+        #{msgtype,jdbcType=INTEGER},
+      </if>
+      <if test="fromuser != null" >
+        #{fromuser,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="touser != null" >
+        #{touser,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <insert id="insertUser">
+    INSERT ignore into record_user(name, nickName, avatar, sign, remark, isGroupChat)
+    values(#{name}, #{nickName}, #{avatar}, #{sign}, #{remark}, #{isGroupChat})
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.ouda.entity.RecordWithBLOBs" >
+    update record
+    <set >
+      <if test="createtime != null" >
+        createTime = #{createtime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="msgtype != null" >
+        msgType = #{msgtype,jdbcType=INTEGER},
+      </if>
+      <if test="fromuser != null" >
+        fromUser = #{fromuser,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="touser != null" >
+        toUser = #{touser,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.ouda.entity.RecordWithBLOBs" >
+    update record
+    set createTime = #{createtime,jdbcType=TIMESTAMP},
+      msgType = #{msgtype,jdbcType=INTEGER},
+      fromUser = #{fromuser,jdbcType=LONGVARCHAR},
+      toUser = #{touser,jdbcType=LONGVARCHAR},
+      content = #{content,jdbcType=LONGVARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.ouda.entity.Record" >
+    update record
+    set createTime = #{createtime,jdbcType=TIMESTAMP},
+      msgType = #{msgtype,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>
